@@ -5,6 +5,8 @@ class NoiseGenerator {
         this.gainNode.connect(this.audioContext.destination);
         this.currentSource = null;
         this.isPlaying = false;
+        this.currentVolume = 20;
+        this.gainNode.gain.value = this.currentVolume / 100;
     }
 
     createNoiseBuffer(type) {
@@ -54,6 +56,7 @@ class NoiseGenerator {
             source.buffer = buffer;
             source.loop = true;
             source.connect(this.gainNode);
+            this.gainNode.gain.value = this.currentVolume / 100;
             source.start();
             this.currentSource = source;
         } else {
@@ -61,6 +64,7 @@ class NoiseGenerator {
             audio.loop = true;
             const source = this.audioContext.createMediaElementSource(audio);
             source.connect(this.gainNode);
+            this.gainNode.gain.value = this.currentVolume / 100;
             audio.play();
             this.currentSource = { audio, stop: () => audio.pause() };
         }
@@ -80,6 +84,7 @@ class NoiseGenerator {
     }
 
     setVolume(value) {
+        this.currentVolume = value;
         this.gainNode.gain.value = value / 100;
     }
 }
@@ -90,16 +95,28 @@ const noiseGenerator = new NoiseGenerator();
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'play':
-            noiseGenerator.play(request.noiseType);
+            alert('play 신호 offscreen.js 에서 수신');
+            if (!noiseGenerator.isPlaying) {
+                alert('이미 재생중!');
+                noiseGenerator.play(request.noiseType);
+            }
             break;
         case 'stop':
+            alert('stop 신호 offscreen.js 에서 수신');
             noiseGenerator.stop();
             break;
         case 'setVolume':
+            alert('setVolume 신호 offscreen.js 에서 수신');
             noiseGenerator.setVolume(request.volume);
             break;
         case 'getState':
+            alert('getState 신호 offscreen.js 에서 수신');
             sendResponse({ isPlaying: noiseGenerator.isPlaying });
             break;
     }
+});
+
+// Offscreen 문서가 로드되면 background에 알림
+chrome.runtime.sendMessage({ action: 'offscreenReady' }).catch(error => {
+    console.error('Offscreen ready 메시지 전송 실패:', error);
 });
