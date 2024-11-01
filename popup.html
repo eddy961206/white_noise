@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>White Noise Generator</title>
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>White Noise Generator</h1>
+        
+        <div class="sound-selector">
+            <select id="noiseType">
+                <option value="white">White Noise</option>
+                <option value="pink">Pink Noise</option>
+                <option value="brown">Brown Noise</option>
+                <option value="rain">Rain Sounds</option>
+                <option value="waves">Ocean Waves</option>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button id="playPause" class="control-btn">
+                <span class="play-icon">▶</span>
+            </button>
+            
+            <div class="volume-control">
+                <input type="range" id="volume" min="0" max="100" value="50">
+                <span id="volumeValue">50%</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="thirdParty/jquery-3.6.0.min.js"></script>
+    <script src="src/popup.js"></script>
+</body>
+</html> 
