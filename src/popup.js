@@ -101,12 +101,22 @@ $(() => {
         $('#savePreset').on('click', () => {
             const name = $('#presetName').val().trim();
             if (name) {
-                chrome.runtime.sendMessage({ 
-                    action: 'saveCustomPreset',
-                    name: name
+                const preset = {
+                    name,
+                    frequency: $('#frequency').val(),
+                    resonance: $('#resonance').val(),
+                    modulation: $('#modulation').val(),
+                    filterCutoff: $('#filterCutoff').val()
+                };
+
+                chrome.storage.local.get(['noisePresets'], (result) => {
+                    const presets = result.noisePresets || [];
+                    presets.push(preset);
+                    chrome.storage.local.set({ noisePresets: presets }, () => {
+                        loadPresets();
+                        $('#presetName').val('');
+                    });
                 });
-                loadPresets();
-                $('#presetName').val('');
             }
         });
 
@@ -117,11 +127,6 @@ $(() => {
                 chrome.storage.local.get(['noisePresets'], (result) => {
                     const preset = result.noisePresets.find(p => p.name === presetName);
                     if (preset) {
-                        chrome.runtime.sendMessage({ 
-                            action: 'loadCustomPreset',
-                            preset: preset
-                        });
-                        
                         // UI 업데이트
                         Object.keys(preset).forEach(param => {
                             if (param !== 'name') {
@@ -131,8 +136,23 @@ $(() => {
                                         ? `${preset[param]} Hz`
                                         : `${preset[param]}%`
                                 );
+                                
+                                // 파라미터 설정 메시지 전송
+                                chrome.runtime.sendMessage({ 
+                                    action: 'setCustomParameter',
+                                    param: param,
+                                    value: parseFloat(preset[param])
+                                });
                             }
                         });
+
+                        // 현재 재생 중이면 업데이트된 설정으로 다시 재생
+                        if (settings.isPlaying && settings.type === 'custom') {
+                            chrome.runtime.sendMessage({ 
+                                action: 'play',
+                                noiseType: 'custom'
+                            });
+                        }
                     }
                 });
             }

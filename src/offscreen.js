@@ -2,11 +2,9 @@ class NoiseGenerator {
     constructor() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.gainNode = this.audioContext.createGain();
-        this.gainNode.connect(this.audioContext.destination);
         this.currentSource = null;
         this.isPlaying = false;
         this.currentVolume = 20;
-        this.gainNode.gain.value = this.currentVolume / 100;
         
         // 커스텀 노이즈 설정
         this.customSettings = {
@@ -16,15 +14,25 @@ class NoiseGenerator {
             filterCutoff: 1000
         };
         
-        // 필터 노드 설정
+        // 필터 노드 설정 (커스텀 노이즈용)
         this.filterNode = this.audioContext.createBiquadFilter();
         this.filterNode.type = 'lowpass';
         this.filterNode.frequency.value = this.customSettings.filterCutoff;
         this.filterNode.Q.value = this.customSettings.resonance;
         
-        // 노드 연결
-        this.gainNode.connect(this.filterNode);
-        this.filterNode.connect(this.audioContext.destination);
+        // 커스텀 노이즈용 게인 노드
+        this.customGainNode = this.audioContext.createGain();
+        
+        // 노드 연결 (커스텀 노이즈 경로)
+        this.filterNode.connect(this.customGainNode);
+        this.customGainNode.connect(this.audioContext.destination);
+        
+        // 기본 노이즈 경로
+        this.gainNode.connect(this.audioContext.destination);
+        
+        // 초기 볼륨 설정
+        this.gainNode.gain.value = this.currentVolume / 100;
+        this.customGainNode.gain.value = this.currentVolume / 100;
     }
 
     createNoiseBuffer(type) {
@@ -99,68 +107,15 @@ class NoiseGenerator {
         
         if (type === 'custom') {
             source.connect(this.filterNode);
+            this.customGainNode.gain.value = this.currentVolume / 100;
         } else {
             source.connect(this.gainNode);
+            this.gainNode.gain.value = this.currentVolume / 100;
         }
         
-        this.gainNode.gain.value = this.currentVolume / 100;
         source.start();
         this.currentSource = source;
         this.isPlaying = true;
-        
-        /* MP3 재생 기능 주석처리
-        else {
-            const audio = new Audio(`src/audio/${type}.mp3`);
-            audio.loop = true;
-            const source = this.audioContext.createMediaElementSource(audio);
-            source.connect(this.gainNode);
-            this.gainNode.gain.value = this.currentVolume / 100;
-            audio.play();
-            this.currentSource = { audio, stop: () => audio.pause() };
-        }
-        */
-    }
-
-    // 커스텀 노이즈 파라미터 설정
-    setCustomParameter(param, value) {
-        this.customSettings[param] = value;
-        
-        switch(param) {
-            case 'filterCutoff':
-                this.filterNode.frequency.value = value;
-                break;
-            case 'resonance':
-                this.filterNode.Q.value = value;
-                break;
-        }
-        
-        // 현재 재생 중이고 커스텀 노이즈인 경우 업데이트
-        if (this.isPlaying) {
-            this.play('custom');
-        }
-    }
-
-    // 커스텀 설정 저장
-    saveCustomPreset(name) {
-        const preset = {
-            ...this.customSettings,
-            name
-        };
-        
-        chrome.storage.local.get(['noisePresets'], (result) => {
-            const presets = result.noisePresets || [];
-            presets.push(preset);
-            chrome.storage.local.set({ noisePresets: presets });
-        });
-    }
-
-    // 커스텀 설정 로드
-    loadCustomPreset(preset) {
-        Object.keys(preset).forEach(param => {
-            if (param !== 'name') {
-                this.setCustomParameter(param, preset[param]);
-            }
-        });
     }
 
     stop() {
@@ -177,7 +132,35 @@ class NoiseGenerator {
 
     setVolume(value) {
         this.currentVolume = value;
+        // 두 게인 노드 모두 볼륨 설정
         this.gainNode.gain.value = value / 100;
+        this.customGainNode.gain.value = value / 100;
+    }
+
+    setCustomParameter(param, value) {
+        this.customSettings[param] = value;
+        
+        switch(param) {
+            case 'filterCutoff':
+                this.filterNode.frequency.value = value;
+                break;
+            case 'resonance':
+                this.filterNode.Q.value = value;
+                break;
+        }
+        
+        // 현재 재생 중이고 커스텀 노이즈인 경우 업데이트
+        if (this.isPlaying && this.currentSource) {
+            this.play('custom');
+        }
+    }
+
+    setCustomPreset(preset) {
+        Object.keys(preset).forEach(param => {
+            if (param !== 'name') {
+                this.setCustomParameter(param, preset[param]);
+            }
+        });
     }
 }
 
@@ -185,7 +168,6 @@ const noiseGenerator = new NoiseGenerator();
 
 // 메시지 리스너
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // 중복 실행 방지를 위해 응답 즉시 처리
     let handled = false;
 
     switch (request.action) {
@@ -203,6 +185,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             break;
         case 'getState':
             sendResponse({ isPlaying: noiseGenerator.isPlaying });
+            handled = true;
+            break;
+        case 'setCustomParameter':
+            noiseGenerator.setCustomParameter(request.param, request.value);
+            handled = true;
+            break;
+        case 'setCustomPreset':
+            noiseGenerator.setCustomPreset(request.preset);
             handled = true;
             break;
     }
