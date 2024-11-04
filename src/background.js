@@ -16,8 +16,6 @@ async function ensureOffscreen() {
             reasons: ['AUDIO_PLAYBACK'],
             justification: '백색 소음 재생을 위해 필요합니다.'
         });
-
-        console.log('Offscreen document 생성 완료!');
     } catch (error) {
         console.error('Offscreen document 생성 중 에러:', error);
     }
@@ -25,6 +23,14 @@ async function ensureOffscreen() {
 
 let messageQueue = [];
 let isOffscreenReady = false;
+
+// offscreenReady 메시지 수신 처리
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'offscreenReady') {
+        isOffscreenReady = true;
+        processMessageQueue();
+    }
+});
 
 // Offscreen 문서가 준비되면 큐에 있는 메시지들을 전송
 async function processMessageQueue() {
@@ -42,18 +48,14 @@ async function processMessageQueue() {
 
 // 메시지 리스너
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    console.log('Background received message:', request);
-
     try {
         switch (request.action) {
             case 'play':
-                console.log('play 신호 background.js 에서 수신');
                 await ensureOffscreen();
                 // Offscreen 문서에 메시지 전달
                 try {
                     await chrome.runtime.sendMessage(request);
                 } catch (error) {
-                    console.error('Play 메시지 전송 실패:', error);
                     messageQueue.push(request);
                 }
                 break;
@@ -62,15 +64,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                 try {
                     await chrome.runtime.sendMessage(request);
                 } catch (error) {
-                    console.error('Stop 메시지 전송 실패:', error);
+                    messageQueue.push(request);
                 }
                 break;
 
             case 'setVolume':
+                if (!isOffscreenReady) {
+                    await ensureOffscreen();
+                    messageQueue.push(request);
+                }
                 try {
                     await chrome.runtime.sendMessage(request);
                 } catch (error) {
-                    console.error('Volume 메시지 전송 실패:', error);
+                    messageQueue.push(request);
                 }
                 break;
 

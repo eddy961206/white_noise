@@ -36,16 +36,13 @@ $(() => {
             $('.play-icon').text('▶');
             settings.isPlaying = false;
         } else {
-            alert('play 신호 popup.js -> background.js 전달');
-            // 볼륨을 먼저 설정한 후 재생 요청
+            chrome.runtime.sendMessage({ 
+                action: 'play',
+                noiseType: settings.type
+            });
             chrome.runtime.sendMessage({ 
                 action: 'setVolume',
                 volume: settings.volume
-            }, () => {
-                chrome.runtime.sendMessage({ 
-                    action: 'play',
-                    noiseType: settings.type
-                });
             });
             $('.play-icon').text('⏸');
             settings.isPlaying = true;
@@ -56,15 +53,13 @@ $(() => {
     $('#noiseType').on('change', function() {
         settings.type = $(this).val();
         if (settings.isPlaying) {
-            // 볼륨을 먼저 설정한 후 재생 요청
+            chrome.runtime.sendMessage({ 
+                action: 'play',
+                noiseType: settings.type
+            });
             chrome.runtime.sendMessage({ 
                 action: 'setVolume',
                 volume: settings.volume
-            }, () => {
-                chrome.runtime.sendMessage({ 
-                    action: 'play',
-                    noiseType: settings.type
-                });
             });
         }
         saveSettings();

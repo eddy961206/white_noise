@@ -93,25 +93,27 @@ const noiseGenerator = new NoiseGenerator();
 
 // 메시지 리스너
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // 중복 실행 방지를 위해 응답 즉시 처리
+    let handled = false;
+
     switch (request.action) {
         case 'play':
-            alert('play 신호 offscreen.js 에서 수신');
             if (!noiseGenerator.isPlaying) {
-                alert('이미 재생중!');
                 noiseGenerator.play(request.noiseType);
+                handled = true;
             }
             break;
         case 'stop':
-            alert('stop 신호 offscreen.js 에서 수신');
             noiseGenerator.stop();
+            handled = true;
             break;
         case 'setVolume':
-            alert('setVolume 신호 offscreen.js 에서 수신');
             noiseGenerator.setVolume(request.volume);
+            handled = true;
             break;
         case 'getState':
-            alert('getState 신호 offscreen.js 에서 수신');
             sendResponse({ isPlaying: noiseGenerator.isPlaying });
+            handled = true;
             break;
     }
 });
