@@ -10,7 +10,7 @@ async function ensureOffscreen() {
         await chrome.offscreen.createDocument({
             url: 'offscreen.html',
             reasons: ['AUDIO_PLAYBACK'],
-            justification: '백색 소음 재생을 위해 필요합니다.'
+            justification: 'Necessary for white noise playback.'
         });
     } catch (error) {
         // 이미 존재하는 경우의 에러는 무시

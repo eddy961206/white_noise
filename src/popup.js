@@ -14,6 +14,10 @@ $(() => {
             $('#volume').val(settings.volume);
             $('#volumeValue').text(`${settings.volume}%`);
             
+            if (settings.type === 'custom') {
+                $('#customControls').show();
+            }
+            
             if (settings.isPlaying) {
                 chrome.runtime.sendMessage({ action: 'play', noiseType: settings.type });
                 $('.play-icon').text('⏸');
@@ -111,12 +115,34 @@ $(() => {
 
                 chrome.storage.local.get(['noisePresets'], (result) => {
                     const presets = result.noisePresets || [];
-                    presets.push(preset);
+                    const existingIndex = presets.findIndex(p => p.name === name);
+                    if (existingIndex !== -1) {
+                        presets[existingIndex] = preset;
+                    } else {
+                        presets.push(preset);
+                    }
                     chrome.storage.local.set({ noisePresets: presets }, () => {
                         loadPresets();
                         $('#presetName').val('');
                     });
                 });
+            }
+        });
+
+        // 프리셋 삭제
+        $('#deletePreset').on('click', () => {
+            const selectedPreset = $('#presetList').val();
+            if (selectedPreset) {
+                if (confirm(`Delete preset "${selectedPreset}"?`)) {
+                    chrome.storage.local.get(['noisePresets'], (result) => {
+                        const presets = result.noisePresets || [];
+                        const updatedPresets = presets.filter(p => p.name !== selectedPreset);
+                        chrome.storage.local.set({ noisePresets: updatedPresets }, () => {
+                            loadPresets();
+                            $('#presetList').val('');
+                        });
+                    });
+                }
             }
         });
 
