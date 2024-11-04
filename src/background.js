@@ -2,11 +2,7 @@
 async function ensureOffscreen() {
     try {
         // 이미 존재하는지 확인
-        const existingContexts = await chrome.runtime.getContexts({
-            contextTypes: ['OFFSCREEN_DOCUMENT']
-        });
-        
-        if (existingContexts.length > 0) {
+        if (await chrome.offscreen.hasDocument()) {
             return;
         }
 
@@ -17,7 +13,10 @@ async function ensureOffscreen() {
             justification: '백색 소음 재생을 위해 필요합니다.'
         });
     } catch (error) {
-        console.error('Offscreen document 생성 중 에러:', error);
+        // 이미 존재하는 경우의 에러는 무시
+        if (!error.message.includes('Only a single offscreen document may be created')) {
+            console.error('Offscreen document 생성 중 에러:', error);
+        }
     }
 }
 
@@ -51,6 +50,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     try {
         switch (request.action) {
             case 'play':
+                console.log(request)
                 await ensureOffscreen();
                 // Offscreen 문서에 메시지 전달
                 try {

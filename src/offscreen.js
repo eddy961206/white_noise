@@ -98,10 +98,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     switch (request.action) {
         case 'play':
-            if (!noiseGenerator.isPlaying) {
-                noiseGenerator.play(request.noiseType);
-                handled = true;
-            }
+            noiseGenerator.play(request.noiseType);
+            handled = true;
             break;
         case 'stop':
             noiseGenerator.stop();
