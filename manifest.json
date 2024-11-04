@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Simple White Noise Generator",
-  "version": "1.0.1",
-  "description": "A simple white noise generator for better focus and relaxation",
+  "name": "Custom Noise Generator",
+  "version": "1.0.0",
+  "description": "A versatile noise generator for enhanced focus and relaxation.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
@@ -25,14 +25,5 @@
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
-  },
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["src/audio/*.mp3"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 } 
