@@ -10,7 +10,7 @@ async function ensureOffscreen() {
         await chrome.offscreen.createDocument({
             url: 'offscreen.html',
             reasons: ['AUDIO_PLAYBACK'],
-            justification: '백색 소음 재생을 위해 필요합니다.'
+            justification: 'Necessary for white noise playback.'
         });
     } catch (error) {
         // 이미 존재하는 경우의 에러는 무시
@@ -50,9 +50,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     try {
         switch (request.action) {
             case 'play':
-                console.log(request)
                 await ensureOffscreen();
-                // Offscreen 문서에 메시지 전달
                 try {
                     await chrome.runtime.sendMessage(request);
                 } catch (error) {
@@ -73,6 +71,30 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                     await ensureOffscreen();
                     messageQueue.push(request);
                 }
+                try {
+                    await chrome.runtime.sendMessage(request);
+                } catch (error) {
+                    messageQueue.push(request);
+                }
+                break;
+
+            case 'setCustomParameter':
+                try {
+                    await chrome.runtime.sendMessage(request);
+                } catch (error) {
+                    messageQueue.push(request);
+                }
+                break;
+
+            case 'saveCustomPreset':
+                try {
+                    await chrome.runtime.sendMessage(request);
+                } catch (error) {
+                    messageQueue.push(request);
+                }
+                break;
+
+            case 'loadCustomPreset':
                 try {
                     await chrome.runtime.sendMessage(request);
                 } catch (error) {

@@ -7,15 +7,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>White Noise Generator</h1>
+        <h1>Noise Generator</h1>
         
         <div class="sound-selector">
             <select id="noiseType">
                 <option value="white">White Noise</option>
                 <option value="pink">Pink Noise</option>
                 <option value="brown">Brown Noise</option>
-                <option value="rain">Rain Sounds</option>
-                <option value="waves">Ocean Waves</option>
+                <option value="violet">Violet Noise</option>
+                <option value="grey">Grey Noise</option>
+                <option value="custom">Custom Noise</option>
             </select>
         </div>
 
@@ -27,6 +28,43 @@
             <div class="volume-control">
                 <input type="range" id="volume" min="0" max="100" value="50">
                 <span id="volumeValue">50%</span>
+            </div>
+        </div>
+
+        <div id="customControls" class="custom-controls" style="display: none;">
+            <h2>Custom Noise Controls</h2>
+            
+            <div class="control-group">
+                <label>Frequency</label>
+                <input type="range" id="frequency" min="20" max="2000" value="440" class="knob">
+                <span class="value">440 Hz</span>
+            </div>
+
+            <div class="control-group">
+                <label>Resonance</label>
+                <input type="range" id="resonance" min="0" max="100" value="50" class="knob">
+                <span class="value">50%</span>
+            </div>
+
+            <div class="control-group">
+                <label>Modulation</label>
+                <input type="range" id="modulation" min="0" max="100" value="30" class="knob">
+                <span class="value">30%</span>
+            </div>
+
+            <div class="control-group">
+                <label>Filter Cutoff</label>
+                <input type="range" id="filterCutoff" min="20" max="20000" value="1000" class="knob">
+                <span class="value">1000 Hz</span>
+            </div>
+
+            <div class="preset-controls">
+                <input type="text" id="presetName" placeholder="Preset Name">
+                <button id="savePreset">Save</button>
+                <select id="presetList">
+                    <option value="">Load Preset...</option>
+                </select>
+                <button id="deletePreset" class="delete-btn">Delete</button>
             </div>
         </div>
     </div>
