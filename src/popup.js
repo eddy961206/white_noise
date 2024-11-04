@@ -2,7 +2,7 @@
 $(() => {
     let settings = {
         type: 'white',
-        volume: 50,
+        volume: 20,
         isPlaying: false
     };
 
@@ -30,6 +30,7 @@ $(() => {
 
     // 이벤트 핸들러
     $('#playPause').on('click', () => {
+        console.log('현재 설정:', settings);  // 현재 상태 로깅
         if (settings.isPlaying) {
             chrome.runtime.sendMessage({ action: 'stop' });
             $('.play-icon').text('▶');

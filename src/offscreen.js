@@ -5,6 +5,8 @@ class NoiseGenerator {
         this.gainNode.connect(this.audioContext.destination);
         this.currentSource = null;
         this.isPlaying = false;
+        this.currentVolume = 20;
+        this.gainNode.gain.value = this.currentVolume / 100;
     }
 
     createNoiseBuffer(type) {
@@ -54,6 +56,7 @@ class NoiseGenerator {
             source.buffer = buffer;
             source.loop = true;
             source.connect(this.gainNode);
+            this.gainNode.gain.value = this.currentVolume / 100;
             source.start();
             this.currentSource = source;
         } else {
@@ -61,6 +64,7 @@ class NoiseGenerator {
             audio.loop = true;
             const source = this.audioContext.createMediaElementSource(audio);
             source.connect(this.gainNode);
+            this.gainNode.gain.value = this.currentVolume / 100;
             audio.play();
             this.currentSource = { audio, stop: () => audio.pause() };
         }
@@ -80,6 +84,7 @@ class NoiseGenerator {
     }
 
     setVolume(value) {
+        this.currentVolume = value;
         this.gainNode.gain.value = value / 100;
     }
 }
@@ -88,18 +93,30 @@ const noiseGenerator = new NoiseGenerator();
 
 // 메시지 리스너
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // 중복 실행 방지를 위해 응답 즉시 처리
+    let handled = false;
+
     switch (request.action) {
         case 'play':
             noiseGenerator.play(request.noiseType);
+            handled = true;
             break;
         case 'stop':
             noiseGenerator.stop();
+            handled = true;
             break;
         case 'setVolume':
             noiseGenerator.setVolume(request.volume);
+            handled = true;
             break;
         case 'getState':
             sendResponse({ isPlaying: noiseGenerator.isPlaying });
+            handled = true;
             break;
     }
+});
+
+// Offscreen 문서가 로드되면 background에 알림
+chrome.runtime.sendMessage({ action: 'offscreenReady' }).catch(error => {
+    console.error('Offscreen ready 메시지 전송 실패:', error);
 });
